@@ -1,4 +1,7 @@
 import Foundation
+#if canImport(FoundationNetworking)
+import FoundationNetworking
+#endif
 
 /// Talks to `sync-server/server.py`. The invite code is the only credential,
 /// so this is for a LAN or a server you trust, not for private photos on the open internet.
@@ -61,7 +64,6 @@ struct HTTPSyncBackend: SyncBackend {
     private static func makeSession() -> URLSession {
         let configuration = URLSessionConfiguration.ephemeral
         configuration.timeoutIntervalForRequest = 25
-        configuration.waitsForConnectivity = false
         return URLSession(configuration: configuration)
     }
 

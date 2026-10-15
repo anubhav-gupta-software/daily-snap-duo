@@ -63,7 +63,7 @@ enum PromptCalendar {
     ]
 
     static func dayKey(for date: Date, timeZone: TimeZone) -> String {
-        var calendar = gregorian(timeZone)
+        let calendar = gregorian(timeZone)
         let parts = calendar.dateComponents([.year, .month, .day], from: date)
         return String(format: "%04d-%02d-%02d", parts.year ?? 0, parts.month ?? 0, parts.day ?? 0)
     }
