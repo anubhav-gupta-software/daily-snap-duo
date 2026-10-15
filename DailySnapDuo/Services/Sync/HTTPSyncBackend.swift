@@ -91,7 +91,11 @@ struct HTTPSyncBackend: SyncBackend {
                 }
                 throw SyncError.message("The relay returned an error (\(http.statusCode)).")
             }
-            return try JSONCoding.decoder().decode(Response.self, from: data)
+            do {
+                return try JSONCoding.decoder().decode(Response.self, from: data)
+            } catch {
+                throw SyncError.message("The relay sent something I couldn't read.")
+            }
         } catch let error as SyncError {
             throw error
         } catch {

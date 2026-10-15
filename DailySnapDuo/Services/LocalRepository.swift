@@ -25,7 +25,7 @@ final class LocalRepository {
         let base = directory ?? FileManager.default
             .urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
             .appendingPathComponent("DailySnapDuo", isDirectory: true)
-        directory = base
+        self.directory = base
         fileURL = base.appendingPathComponent("store.json")
         encoder = JSONCoding.encoder()
         decoder = JSONCoding.decoder()
