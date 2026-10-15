@@ -20,7 +20,7 @@ struct OnboardingView: View {
                         .fixedSize(horizontal: false, vertical: true)
 
                     VStack(alignment: .leading, spacing: 14) {
-                        rule(icon: "clock", text: "It opens sometime between 8:00 and 9:30.")
+                        rule(icon: "clock", text: "It opens sometime between 8:00 AM and 9:30 PM.")
                         rule(icon: "camera.fill", text: "One shutter takes the back, then the front.")
                         rule(icon: "lock.fill", text: "You can't see their snap until you send yours.")
                     }
