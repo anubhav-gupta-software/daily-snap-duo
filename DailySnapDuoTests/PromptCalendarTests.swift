@@ -75,6 +75,11 @@ final class PromptCalendarTests: XCTestCase {
         XCTAssertFalse(status.canSeePartner)
     }
 
+    func testPracticePartnerIDDoesNotChange() {
+        XCTAssertEqual(StableUUID.make(seed: "riley|K7MQ2P"), StableUUID.make(seed: "riley|K7MQ2P"))
+        XCTAssertNotEqual(StableUUID.make(seed: "riley|K7MQ2P"), StableUUID.make(seed: "riley|H4NP8R"))
+    }
+
     func testUpcomingHidesTheCamera() {
         let schedule = PromptCalendar.schedule(code: "K7MQ2P", dayKey: "2026-10-15", timeZone: zone)
         let before = schedule.opensAt.addingTimeInterval(-60)
