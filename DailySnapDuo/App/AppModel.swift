@@ -11,6 +11,7 @@ final class AppModel {
     private(set) var snaps: [Snap]
     var settings: AppSettings
     var banner: String?
+    var pendingInviteCode: String?
     var notificationAuthorization: UNAuthorizationStatus = .notDetermined
 
     private let repository: LocalRepository
@@ -90,6 +91,11 @@ final class AppModel {
             break
         }
         return count
+    }
+
+    func refresh() async {
+        ensureSamplePartnerSnap()
+        publishWidget()
     }
 
     func onForeground() async {

@@ -2,10 +2,12 @@ import SwiftUI
 
 @main
 struct DailySnapDuoApp: App {
+    @State private var model = AppModel()
+
     var body: some Scene {
         WindowGroup {
-            Text("Daily Snap Duo")
-                .font(.system(.title, design: .serif))
+            RootView()
+                .environment(model)
         }
     }
 }
