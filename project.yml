@@ -36,6 +36,7 @@ targets:
     dependencies:
       - target: DailySnapDuoWidget
         embed: true
+        codeSign: true
   DailySnapDuoWidget:
     type: app-extension
     platform: iOS
