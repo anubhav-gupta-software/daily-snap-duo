@@ -24,7 +24,7 @@ struct WidgetSnapshot: Codable, Equatable {
     static let unavailable = WidgetSnapshot(
         state: .unavailable,
         prompt: "Daily Snap Duo",
-        detail: "Open the app to post today's snap.",
+        detail: "Open the app. A photo shows up here after you both post.",
         friendName: "",
         updatedAt: Date(timeIntervalSince1970: 0)
     )
