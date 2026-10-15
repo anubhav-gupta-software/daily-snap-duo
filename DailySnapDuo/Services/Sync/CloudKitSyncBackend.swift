@@ -79,11 +79,11 @@ struct CloudKitSyncBackend: SyncBackend {
         } else {
             record = CKRecord(recordType: "DuoSnap", recordID: recordID)
         }
-        record["pairCode"] = snap.pairCode as CKRecordValue
-        record["dayKey"] = snap.dayKey as CKRecordValue
-        record["authorId"] = snap.authorId.uuidString as CKRecordValue
-        record["authorName"] = snap.authorName as CKRecordValue
-        record["capturedAt"] = snap.capturedAt as CKRecordValue
+        record["pairCode"] = snap.pairCode as NSString
+        record["dayKey"] = snap.dayKey as NSString
+        record["authorId"] = snap.authorId.uuidString as NSString
+        record["authorName"] = snap.authorName as NSString
+        record["capturedAt"] = snap.capturedAt as NSDate
         record["onTime"] = NSNumber(value: snap.onTime)
         let backURL = try writeTemp(back, name: "\(snap.id.uuidString)-back.jpg")
         let frontURL = try writeTemp(front, name: "\(snap.id.uuidString)-front.jpg")
@@ -130,9 +130,9 @@ struct CloudKitSyncBackend: SyncBackend {
             return existing
         }
         let record = CKRecord(recordType: "DuoPair", recordID: recordID)
-        record["code"] = pair.code as CKRecordValue
-        record["timeZone"] = pair.timeZoneIdentifier as CKRecordValue
-        record["createdAt"] = pair.createdAt as CKRecordValue
+        record["code"] = pair.code as NSString
+        record["timeZone"] = pair.timeZoneIdentifier as NSString
+        record["createdAt"] = pair.createdAt as NSDate
         record["memberIDs"] = [] as NSArray
         record["memberNames"] = [] as NSArray
         record["snapIDs"] = [] as NSArray
