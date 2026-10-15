@@ -1,5 +1,21 @@
 import SwiftUI
 
+struct MainTabView: View {
+    var body: some View {
+        TabView {
+            HomeView()
+                .tabItem { Label("Today", systemImage: "sun.max") }
+            HistoryView()
+                .tabItem { Label("History", systemImage: "rectangle.stack") }
+            PairView()
+                .tabItem { Label("Duo", systemImage: "person.2") }
+        }
+        .toolbarBackground(DuoTheme.background, for: .tabBar)
+        .toolbarBackground(.visible, for: .tabBar)
+        .toolbarColorScheme(.dark, for: .tabBar)
+    }
+}
+
 struct RootView: View {
     @Environment(AppModel.self) private var model
     @Environment(\.scenePhase) private var scenePhase
@@ -9,7 +25,7 @@ struct RootView: View {
             if model.profile == nil || model.pair == nil {
                 OnboardingView()
             } else {
-                HomeView()
+                MainTabView()
             }
         }
         .preferredColorScheme(.dark)
