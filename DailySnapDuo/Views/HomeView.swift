@@ -25,7 +25,11 @@ struct HomeView: View {
             .navigationTitle("Today")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
+                ToolbarItemGroup(placement: .topBarTrailing) {
+                    if model.isSyncing {
+                        ProgressView()
+                            .accessibilityLabel("Syncing")
+                    }
                     Button {
                         showSettings = true
                     } label: {

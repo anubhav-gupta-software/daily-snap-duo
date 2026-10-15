@@ -13,12 +13,14 @@ final class AppModel {
     var banner: String?
     var pendingInviteCode: String?
     var notificationAuthorization: UNAuthorizationStatus = .notDetermined
+    var isSyncing = false
 
     private let repository: LocalRepository
     private let images: ImageStore
     private let notifications: NotificationScheduler
     private let encoder: JSONEncoder
     private let decoder: JSONDecoder
+    @ObservationIgnored private var pollTask: Task<Void, Never>?
 
     init(repository: LocalRepository = LocalRepository(), notifications: NotificationScheduler = NotificationScheduler()) {
         self.repository = repository
@@ -95,20 +97,47 @@ final class AppModel {
 
     func refresh() async {
         ensureSamplePartnerSnap()
+        guard settings.syncMode != .local, let pair, let profile, !isSyncing else {
+            publishWidget()
+            return
+        }
+        isSyncing = true
+        defer { isSyncing = false }
+        do {
+            let backend = try makeBackend()
+            let member = Member(id: profile.id, displayName: profile.displayName, isSample: false)
+            let remotePair = try await backend.upsertPair(pair, member: member)
+            mergeRemotePair(remotePair, profile: profile)
+            let incoming = try await backend.fetchSnaps(code: remotePair.code, have: Set(snaps.map(\.id)))
+            for item in incoming {
+                try absorb(item, profile: profile)
+            }
+            if let current = self.pair {
+                for snap in snaps where snap.authorId == profile.id && snap.pairCode == current.code {
+                    guard let back = images.data(for: snap.backFilename),
+                          let front = images.data(for: snap.frontFilename) else { continue }
+                    try await backend.upload(snap: snap, back: back, front: front)
+                }
+            }
+            banner = nil
+            persist()
+        } catch {
+            banner = error.localizedDescription
+        }
         publishWidget()
     }
 
     func onForeground() async {
         notificationAuthorization = await notifications.status()
-        ensureSamplePartnerSnap()
-        publishWidget()
         await notifications.clearBadge()
+        await refresh()
         await notifications.reschedule(
             pair: pair,
             profileID: profile?.id,
             snaps: snaps,
             enabled: settings.notificationsEnabled
         )
+        startPolling()
     }
 
     func enableNotifications() async {
@@ -257,7 +286,11 @@ final class AppModel {
 
     func noteSettingsChanged() {
         persist()
-        Task { await rescheduleNotifications() }
+        Task {
+            await rescheduleNotifications()
+            await refresh()
+            startPolling()
+        }
     }
 
     @discardableResult
@@ -298,8 +331,8 @@ final class AppModel {
             snaps.append(snap)
             persist()
             ensureSamplePartnerSnap(now: now)
-            publishWidget(now: now)
             await rescheduleNotifications()
+            await refresh()
             return true
         } catch {
             banner = error.localizedDescription
@@ -532,6 +565,72 @@ final class AppModel {
         }
         persist()
         banner = nil
+    }
+
+    private func makeBackend() throws -> SyncBackend {
+        switch settings.syncMode {
+        case .local:
+            throw SyncError.message("This iPhone isn't syncing with anyone else.")
+        case .http:
+            let trimmed = settings.serverURL.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard let url = URL(string: trimmed), url.scheme == "http" || url.scheme == "https", url.host != nil else {
+                throw SyncError.message("Add the relay address in Settings, like http://192.168.1.20:8787.")
+            }
+            return HTTPSyncBackend(baseURL: url)
+        case .cloudKit:
+            return CloudKitSyncBackend(containerID: CloudKitSyncBackend.containerIDFromBundle())
+        }
+    }
+
+    private func mergeRemotePair(_ remote: Duo, profile: Profile) {
+        guard var pair else {
+            self.pair = remote
+            return
+        }
+        pair.timeZoneIdentifier = remote.timeZoneIdentifier
+        pair.createdAt = min(pair.createdAt, remote.createdAt)
+        let incomingReal = remote.members.contains { !$0.isSample && $0.id != profile.id }
+        if incomingReal {
+            let sampleIDs = Set(pair.members.filter(\.isSample).map(\.id))
+            pair.members.removeAll { $0.isSample }
+            settings.samplePartner = false
+            let removed = snaps.filter { sampleIDs.contains($0.authorId) }
+            snaps.removeAll { sampleIDs.contains($0.authorId) }
+            for snap in removed {
+                images.remove(snap.backFilename)
+                images.remove(snap.frontFilename)
+            }
+        }
+        for member in remote.members where !member.isSample && !pair.members.contains(where: { $0.id == member.id }) {
+            pair.members.append(member)
+        }
+        if !pair.members.contains(where: { $0.id == profile.id }) {
+            pair.members.append(Member(id: profile.id, displayName: profile.displayName, isSample: false))
+        }
+        self.pair = pair
+    }
+
+    private func absorb(_ item: RemoteSnapPayload, profile: Profile) throws {
+        if snaps.contains(where: { $0.id == item.snap.id }) { return }
+        if item.snap.authorId == profile.id, mySnap(on: item.snap.dayKey) != nil { return }
+        var snap = item.snap
+        snap.backFilename = "\(snap.id.uuidString)-back.jpg"
+        snap.frontFilename = "\(snap.id.uuidString)-front.jpg"
+        try images.saveData(item.back, filename: snap.backFilename)
+        try images.saveData(item.front, filename: snap.frontFilename)
+        snaps.append(snap)
+    }
+
+    private func startPolling() {
+        pollTask?.cancel()
+        guard settings.syncMode != .local else { return }
+        pollTask = Task { [weak self] in
+            while !Task.isCancelled {
+                try? await Task.sleep(for: .seconds(25))
+                guard !Task.isCancelled else { return }
+                await self?.refresh()
+            }
+        }
     }
 
     private func makeProfile(named name: String) -> Profile? {
