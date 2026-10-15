@@ -1,0 +1,23 @@
+// Shared build settings for Daily Snap Duo.
+//
+// Free personal teams register an explicit App ID once this project claims an
+// App Group, so the bundle id has to be unique to your Apple ID. If Xcode says
+// the identifier is unavailable, change BUNDLE_ID_PREFIX only — the group id
+// below picks the new prefix up.
+
+BUNDLE_ID_PREFIX = com.anubhavgupta
+APP_GROUP_IDENTIFIER = group.$(BUNDLE_ID_PREFIX).dailysnapduo
+
+CODE_SIGN_STYLE = Automatic
+CODE_SIGN_IDENTITY = Apple Development
+
+IPHONEOS_DEPLOYMENT_TARGET = 17.0
+SWIFT_VERSION = 5.0
+TARGETED_DEVICE_FAMILY = 1
+MARKETING_VERSION = 1.0
+CURRENT_PROJECT_VERSION = 1
+
+SUPPORTS_MACCATALYST = NO
+SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO
+SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO
+ENABLE_USER_SCRIPT_SANDBOXING = NO
